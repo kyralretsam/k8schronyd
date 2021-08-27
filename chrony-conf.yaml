@@ -1,0 +1,17 @@
+apiVersion: v1
+data:
+  chrony.conf: |-
+    pool pool.ntp.org iburst
+    initstepslew 10 pool.ntp.org
+    driftfile /var/lib/chrony/chrony.drift
+    cmdport 0
+
+    # Server Config
+    allow 192.168.1.0/24
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2021-04-28T15:54:22Z"
+  name: chrony-conf
+  namespace: ntpd
+  resourceVersion: "1548264"
+  uid: a6b751f8-8a19-4727-9fd0-a903e53ee989

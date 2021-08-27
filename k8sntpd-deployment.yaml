@@ -1,0 +1,82 @@
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ntpd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8sntpd
+  namespace: ntpd
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 50%
+  selector:
+    matchLabels:
+      app: k8sntpd
+  template:
+    metadata:
+      labels:
+        app: k8sntpd
+    spec:
+      containers:
+      - name: k8sntpd
+        image: kyralretsam/chronyd:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 123
+          protocol: UDP
+          name: ntp-udp
+        - containerPort: 123
+          protocol: TCP
+          name: ntp-tcp
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_BIND_SERVICE
+      dnsPolicy: "Default"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8sntpd-service-udp
+  namespace: ntpd
+  annotations:
+    metallb.universe.tf/allow-shared-ip: k8sntpd-svc
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.1.200
+  selector:
+    app: k8sntpd
+  ports:
+  - port: 123
+    targetPort: 123
+    protocol: UDP
+    name: ntp-udp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8sntpd-service-tcp
+  namespace: ntpd
+  annotations:
+    metallb.universe.tf/allow-shared-ip: k8sntpd-svc
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.1.200
+  selector:
+    app: k8sntpd
+  ports:
+  - port: 123
+    targetPort: 123
+    protocol: TCP
+    name: ntp-tcp
